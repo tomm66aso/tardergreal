@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trader Card — TraderGuardians</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#080c10; --surface:#0d1219; --surface2:#111820; --surface3:#161e28;
+    --border:rgba(255,255,255,0.06); --border-bright:rgba(255,255,255,0.12);
+    --green:#00e5a0; --green-dim:rgba(0,229,160,0.1); --green-glow:rgba(0,229,160,0.25);
+    --red:#ff4d6a; --red-dim:rgba(255,77,106,0.1);
+    --amber:#f5a623; --amber-dim:rgba(245,166,35,0.1);
+    --blue:#3d9fff; --blue-dim:rgba(61,159,255,0.1);
+    --purple:#a78bfa; --purple-dim:rgba(167,139,250,0.1);
+    --text:#e8edf5; --text-muted:#4a5a6e; --text-dim:#7a8a9e;
+    --mono:'JetBrains Mono',monospace; --display:'Syne',sans-serif; --body:'Inter',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);overflow-x:hidden;min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.3;pointer-events:none;z-index:0;}
+
+  .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;position:relative;z-index:1;}
+
+  /* SIDEBAR */
+  .sidebar{background:rgba(8,12,16,0.95);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;backdrop-filter:blur(20px);}
+  .sidebar-header{padding:24px 20px 20px;border-bottom:1px solid var(--border);}
+  .logo{font-family:var(--display);font-size:16px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px;text-decoration:none;}
+  .logo-icon{width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto;}
+  .nav-section-label{font-size:9px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.12em;padding:8px 20px 4px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:12px;font-family:var(--mono);color:var(--text-dim);cursor:pointer;transition:all 0.15s;border-left:2px solid transparent;text-decoration:none;}
+  .nav-item:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+  .nav-item.active{color:var(--green);border-left-color:var(--green);background:var(--green-dim);}
+  .nav-icon{font-size:14px;width:18px;text-align:center;}
+  .sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .user-avatar-sm{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#000;font-family:var(--display);}
+
+  /* MAIN */
+  .main{display:flex;flex-direction:column;}
+  .topbar{padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(8,12,16,0.7);backdrop-filter:blur(20px);position:sticky;top:0;z-index:50;}
+  .breadcrumb{font-size:12px;font-family:var(--mono);color:var(--text-muted);}
+  .breadcrumb span{color:var(--text);}
+  .btn-sm{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border-bright);color:var(--text-dim);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;}
+  .btn-sm:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+  .btn-sm.primary{background:var(--green);color:#000;border-color:var(--green);font-weight:700;}
+  .btn-sm.primary:hover{box-shadow:0 6px 20px var(--green-glow);}
+
+  .content{flex:1;padding:32px;overflow-y:auto;max-width:1200px;margin:0 auto;width:100%;}
+  .content::-webkit-scrollbar{width:4px;}
+  .content::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px;}
+
+  /* ══ CARD HERO ══ */
+  .card-hero{
+    position:relative;
+    background:var(--surface);
+    border:1px solid var(--border-bright);
+    border-radius:20px;
+    overflow:hidden;
+    margin-bottom:24px;
+  }
+  /* Animated gradient banner */
+  .card-banner{
+    height:140px;
+    background:linear-gradient(135deg,#060f18,#0a1a12,#081420,#0f1a0a);
+    background-size:400% 400%;
+    animation:bannerShift 12s ease infinite;
+    position:relative;
+    overflow:hidden;
+  }
+  @keyframes bannerShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .banner-grid{
+    position:absolute;inset:0;
+    background-image:linear-gradient(rgba(0,229,160,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.06) 1px,transparent 1px);
+    background-size:32px 32px;
+  }
+  .banner-glow{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,160,0.15),transparent 70%);top:-100px;left:50%;transform:translateX(-50%);animation:bannerGlow 4s ease-in-out infinite;}
+  @keyframes bannerGlow{0%,100%{opacity:0.6;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.1)}}
+
+  /* Rank ribbon */
+  .rank-ribbon{position:absolute;top:16px;right:16px;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);border:1px solid rgba(245,166,35,0.3);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:6px;}
+  .rank-icon{font-size:16px;}
+  .rank-text{font-family:var(--display);font-size:13px;font-weight:800;color:var(--amber);}
+  .rank-sub{font-family:var(--mono);font-size:9px;color:var(--text-muted);}
+
+  /* Card body */
+  .card-body{padding:0 28px 28px;}
+  .avatar-wrap{position:relative;display:inline-block;margin-top:-40px;margin-bottom:16px;}
+  .avatar{
+    width:80px;height:80px;border-radius:16px;
+    background:linear-gradient(135deg,var(--green) 0%,var(--blue) 100%);
+    border:3px solid var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-size:28px;font-weight:800;color:#000;
+    box-shadow:0 8px 32px rgba(0,229,160,0.3);
+    position:relative;z-index:1;
+  }
+  .avatar-badge{
+    position:absolute;bottom:-4px;right:-4px;
+    width:24px;height:24px;border-radius:6px;
+    background:var(--amber);border:2px solid var(--bg);
+    display:flex;align-items:center;justify-content:center;font-size:12px;z-index:2;
+  }
+  .verified-badge{
+    position:absolute;top:-4px;right:-4px;
+    width:22px;height:22px;border-radius:50%;
+    background:var(--green);border:2px solid var(--bg);
+    display:flex;align-items:center;justify-content:center;font-size:10px;z-index:2;
+  }
+
+  .card-top-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+  .trader-name{font-family:var(--display);font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
+  .trader-handle{font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+  .trader-plan{display:inline-flex;align-items:center;gap:5px;background:var(--amber-dim);border:1px solid rgba(245,166,35,0.2);color:var(--amber);font-size:10px;font-family:var(--mono);font-weight:700;padding:3px 9px;border-radius:100px;text-transform:uppercase;letter-spacing:0.06em;margin-left:8px;}
+
+  .card-actions{display:flex;gap:8px;}
+
+  .trader-bio{font-size:14px;color:var(--text-dim);line-height:1.65;max-width:560px;margin-bottom:20px;}
+
+  /* BADGES ROW */
+  .badges-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 12px;border-radius:8px;
+    font-size:11px;font-family:var(--mono);font-weight:600;
+    border:1px solid;transition:all 0.2s;cursor:default;
+    position:relative;
+  }
+  .badge:hover{transform:translateY(-2px);}
+  .badge-icon{font-size:14px;}
+  .badge.discipline{background:rgba(0,229,160,0.08);border-color:rgba(0,229,160,0.2);color:var(--green);}
+  .badge.winstreak{background:rgba(245,166,35,0.08);border-color:rgba(245,166,35,0.2);color:var(--amber);}
+  .badge.verified{background:rgba(61,159,255,0.08);border-color:rgba(61,159,255,0.2);color:var(--blue);}
+  .badge.elite{background:rgba(167,139,250,0.08);border-color:rgba(167,139,250,0.2);color:var(--purple);}
+  .badge.challenge{background:rgba(255,77,106,0.08);border-color:rgba(255,77,106,0.2);color:var(--red);}
+
+  /* INFO ROW */
+  .info-row{display:flex;gap:20px;flex-wrap:wrap;}
+  .info-item{display:flex;align-items:center;gap:6px;font-size:12px;font-family:var(--mono);color:var(--text-muted);}
+  .info-item span{color:var(--text-dim);}
+
+  /* ══ STATS GRID ══ */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:18px 20px;position:relative;overflow:hidden;
+    transition:all 0.25s;cursor:default;
+  }
+  .stat-card:hover{border-color:var(--border-bright);transform:translateY(-2px);}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity 0.3s;}
+  .stat-card:hover::before{opacity:1;}
+  .stat-card.g::before{background:var(--green);}
+  .stat-card.r::before{background:var(--red);}
+  .stat-card.a::before{background:var(--amber);}
+  .stat-card.b::before{background:var(--blue);}
+  .stat-card.p::before{background:var(--purple);}
+
+  .stat-label{font-size:10px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
+  .stat-value{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
+  .stat-value.g{color:var(--green);}
+  .stat-value.r{color:var(--red);}
+  .stat-value.a{color:var(--amber);}
+  .stat-value.b{color:var(--blue);}
+  .stat-value.p{color:var(--purple);}
+  .stat-sub{font-size:11px;font-family:var(--mono);color:var(--text-muted);}
+  .stat-sub.pos{color:var(--green);}
+  .stat-sub.neg{color:var(--red);}
+  .stat-trend{position:absolute;bottom:16px;right:16px;font-size:18px;opacity:0.3;}
+
+  /* MINI SPARKLINE */
+  .sparkline{height:36px;margin-top:8px;}
+  .sparkline svg{width:100%;height:100%;}
+
+  /* ══ EQUITY CHART ══ */
+  .chart-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:24px;}
+  .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .chart-title{font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:-0.3px;}
+  .chart-tf{display:flex;gap:4px;}
+  .tf-btn{padding:5px 12px;border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--text-muted);background:none;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;}
+  .tf-btn.active{background:var(--surface2);color:var(--text);border-color:var(--border-bright);}
+  .chart-area{height:180px;position:relative;}
+  .chart-area svg{width:100%;height:100%;}
+
+  /* ══ TWO COLS ══ */
+  .two-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+
+  /* RULE COMPLIANCE */
+  .compliance-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;}
+  .compliance-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .compliance-score{
+    width:80px;height:80px;border-radius:50%;
+    background:conic-gradient(var(--green) calc(var(--pct)*3.6deg), var(--border) 0deg);
+    --pct:94;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .compliance-score::before{content:'';position:absolute;width:60px;height:60px;border-radius:50%;background:var(--surface);}
+  .compliance-score-val{font-family:var(--display);font-size:16px;font-weight:800;color:var(--green);position:relative;z-index:1;}
+  .rule-list{display:flex;flex-direction:column;gap:10px;}
+  .rule-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;}
+  .rule-status{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .rule-status.ok{background:var(--green);}
+  .rule-status.warn{background:var(--amber);}
+  .rule-status.fail{background:var(--red);}
+  .rule-name{font-size:12px;color:var(--text-dim);flex:1;}
+  .rule-pct{font-size:11px;font-family:var(--mono);color:var(--text-dim);}
+
+  /* RECENT TRADES */
+  .trades-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;}
+  .trades-list{display:flex;flex-direction:column;gap:8px;}
+  .trade-row{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 14px;background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);border-radius:9px;
+    transition:border-color 0.2s;cursor:pointer;
+  }
+  .trade-row:hover{border-color:var(--border-bright);}
+  .trade-dir{width:40px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:10px;font-weight:800;flex-shrink:0;}
+  .trade-dir.l{background:var(--green-dim);color:var(--green);}
+  .trade-dir.s{background:var(--red-dim);color:var(--red);}
+  .trade-sym{font-family:var(--mono);font-size:12px;font-weight:600;width:72px;flex-shrink:0;}
+  .trade-date{font-family:var(--mono);font-size:10px;color:var(--text-muted);flex:1;}
+  .trade-rr{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+  .trade-pnl{font-family:var(--display);font-size:13px;font-weight:700;text-align:right;min-width:72px;}
+  .trade-pnl.pos{color:var(--green);}
+  .trade-pnl.neg{color:var(--red);}
+  .trade-rule{font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:100px;}
+  .trade-rule.ok{background:var(--green-dim);color:var(--green);}
+  .trade-rule.viol{background:var(--red-dim);color:var(--red);}
+
+  /* ══ CHALLENGES ══ */
+  .challenges-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:24px;}
+  .challenges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .challenge-card{
+    background:rgba(255,255,255,0.02);border:1px solid var(--border);
+    border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;
+  }
+  .challenge-card.active-ch{border-color:rgba(0,229,160,0.2);}
+  .challenge-card.won-ch{border-color:rgba(245,166,35,0.2);}
+  .ch-status{font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+  .ch-status.active{color:var(--green);}
+  .ch-status.won{color:var(--amber);}
+  .ch-status.completed{color:var(--text-muted);}
+  .ch-name{font-family:var(--display);font-size:13px;font-weight:700;margin-bottom:4px;}
+  .ch-sub{font-size:11px;font-family:var(--mono);color:var(--text-muted);margin-bottom:10px;}
+  .ch-progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px;}
+  .ch-progress-fill{height:100%;border-radius:2px;background:var(--green);transition:width 1.2s ease;}
+  .ch-progress-text{font-size:10px;font-family:var(--mono);color:var(--text-muted);display:flex;justify-content:space-between;}
+  .ch-medal{position:absolute;top:12px;right:12px;font-size:20px;}
+
+  /* ══ SHARE CARD ══ */
+  .share-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:24px;}
+  .share-preview{
+    background:var(--bg);border:1px solid var(--border-bright);border-radius:12px;
+    padding:24px;margin-bottom:16px;position:relative;overflow:hidden;
+    max-width:480px;
+  }
+  .share-preview::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:0.5;}
+  .sp-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .sp-avatar{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:18px;font-weight:800;color:#000;}
+  .sp-name{font-family:var(--display);font-size:16px;font-weight:800;}
+  .sp-handle{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+  .sp-verified{color:var(--blue);font-size:12px;}
+  .sp-logo{margin-left:auto;font-family:var(--display);font-size:12px;font-weight:800;color:var(--green);}
+  .sp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+  .sp-stat-val{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:-0.3px;}
+  .sp-stat-val.g{color:var(--green);}
+  .sp-stat-label{font-size:9px;font-family:var(--mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;}
+  .sp-badges-mini{display:flex;gap:6px;flex-wrap:wrap;}
+  .sp-badge-mini{font-size:16px;}
+  .sp-footer{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .sp-footer-text{font-family:var(--mono);font-size:9px;color:var(--text-muted);}
+  .sp-qr{width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+
+  .share-actions{display:flex;gap:10px;}
+  .share-btn{display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all 0.2s;border:1px solid;}
+  .share-btn.copy{background:var(--green-dim);border-color:rgba(0,229,160,0.2);color:var(--green);}
+  .share-btn.copy:hover{background:rgba(0,229,160,0.15);}
+  .share-btn.twitter{background:rgba(29,161,242,0.08);border-color:rgba(29,161,242,0.2);color:#1da1f2;}
+  .share-btn.download{background:rgba(255,255,255,0.04);border-color:var(--border-bright);color:var(--text-dim);}
+  .share-btn.download:hover{color:var(--text);}
+
+  /* SECTION HEADER */
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .section-title{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:-0.2px;}
+  .view-all{font-size:11px;font-family:var(--mono);color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+  .view-all:hover{color:var(--text);}
+
+  @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .fade-in{animation:fadeIn 0.5s ease both;}
+  .fade-in-1{animation-delay:0.1s;}
+  .fade-in-2{animation-delay:0.2s;}
+  .fade-in-3{animation-delay:0.3s;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="logo"><div class="logo-icon">⚔️</div>TraderGuardians</a>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Terminale</div>
+      <a href="#" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="#" class="nav-item"><span class="nav-icon">📓</span> Journal</a>
+      <a href="market-intel.html" class="nav-item"><span class="nav-icon">📡</span> Market Intel</a>
+      <a href="segnali.html" class="nav-item"><span class="nav-icon">⚡</span> Segnali</a>
+      <div class="nav-section-label">Crescita</div>
+      <a href="#" class="nav-item"><span class="nav-icon">📋</span> Trade Plan</a>
+      <a href="#" class="nav-item"><span class="nav-icon">🏆</span> Leaderboard</a>
+      <a href="#" class="nav-item"><span class="nav-icon">🎯</span> Sfide</a>
+      <a href="trader-card.html" class="nav-item active"><span class="nav-icon">🃏</span> Trader Card</a>
+      <div class="nav-section-label">Sistema</div>
+      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Impostazioni</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-avatar-sm">MR</div>
+      <div><div style="font-size:12px;font-weight:600;font-family:var(--display);">Marco Rossi</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono);">Piano Elite · Attivo</div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="breadcrumb">TraderGuardians / <span>Trader Card</span></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-sm" onclick="editCard()">✏️ Modifica</button>
+        <button class="btn-sm primary" onclick="document.getElementById('shareSection').scrollIntoView({behavior:'smooth'})">↗ Condividi Card</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ HERO CARD ══ -->
+      <div class="card-hero fade-in">
+        <div class="card-banner">
+          <div class="banner-grid"></div>
+          <div class="banner-glow"></div>
+          <div class="rank-ribbon">
+            <span class="rank-icon">🥇</span>
+            <div>
+              <div class="rank-text">#4</div>
+              <div class="rank-sub">Leaderboard Italia</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-top-row">
+            <div>
+              <div class="avatar-wrap">
+                <div class="avatar">MR</div>
+                <div class="avatar-badge">🥇</div>
+                <div class="verified-badge">✓</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="trader-name">Marco Rossi</div>
+                <div class="trader-plan">Elite</div>
+              </div>
+              <div class="trader-handle">@marco_trades · TraderGuardians since Mar 2026</div>
+            </div>
+            <div class="card-actions">
+              <button class="btn-sm">👥 Segui</button>
+              <button class="btn-sm">💬 Messaggio</button>
+            </div>
+          </div>
+
+          <p class="trader-bio">Scalper e swing trader con focus su XAU/USD e coppie forex major. La disciplina è l'edge. Rule compliance first, profit dopo. Specializzato in price action su H1/H4 con confluenze COT.</p>
+
+          <div class="badges-row">
+            <div class="badge discipline"><span class="badge-icon">🛡️</span> 30gg Disciplina</div>
+            <div class="badge winstreak"><span class="badge-icon">🔥</span> 8 Win Streak</div>
+            <div class="badge verified"><span class="badge-icon">✓</span> Account Verificato</div>
+            <div class="badge elite"><span class="badge-icon">💎</span> Elite Founder</div>
+            <div class="badge challenge"><span class="badge-icon">🏆</span> 2 Sfide Vinte</div>
+            <div class="badge discipline" style="background:var(--blue-dim);border-color:rgba(61,159,255,0.2);color:var(--blue);"><span class="badge-icon">📡</span> Market Intel Pro</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-item">📍 <span>Italia</span></div>
+            <div class="info-item">⏰ <span>Sessione Londra + NY</span></div>
+            <div class="info-item">📈 <span>Forex · Commodities</span></div>
+            <div class="info-item">🎯 <span>Scalping · Swing</span></div>
+            <div class="info-item">📊 <span>847 trade registrati</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ STATS GRID ══ -->
+      <div class="stats-grid fade-in fade-in-1">
+        <div class="stat-card g">
+          <div class="stat-label">P&L Totale</div>
+          <div class="stat-value g">+€ 8.420</div>
+          <div class="stat-sub pos">↑ +€ 1.240 questo mese</div>
+          <div class="sparkline">
+            <svg viewBox="0 0 120 36" preserveAspectRatio="none">
+              <defs><linearGradient id="sg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e5a0" stop-opacity="0.3"/><stop offset="100%" stop-color="#00e5a0" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,30 L15,26 L30,28 L45,18 L60,20 L75,10 L90,12 L105,5 L120,3" stroke="#00e5a0" stroke-width="1.5" fill="none"/>
+              <path d="M0,30 L15,26 L30,28 L45,18 L60,20 L75,10 L90,12 L105,5 L120,3 L120,36 L0,36Z" fill="url(#sg1)"/>
+            </svg>
+          </div>
+          <div class="stat-trend">📈</div>
+        </div>
+        <div class="stat-card a">
+          <div class="stat-label">Win Rate</div>
+          <div class="stat-value a">68.4%</div>
+          <div class="stat-sub">↑ 580/847 trade vincenti</div>
+          <div class="sparkline">
+            <svg viewBox="0 0 120 36" preserveAspectRatio="none">
+              <defs><linearGradient id="sg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5a623" stop-opacity="0.3"/><stop offset="100%" stop-color="#f5a623" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,20 L20,18 L40,22 L60,14 L80,16 L100,10 L120,8" stroke="#f5a623" stroke-width="1.5" fill="none"/>
+              <path d="M0,20 L20,18 L40,22 L60,14 L80,16 L100,10 L120,8 L120,36 L0,36Z" fill="url(#sg2)"/>
+            </svg>
+          </div>
+          <div class="stat-trend">🎯</div>
+        </div>
+        <div class="stat-card g">
+          <div class="stat-label">Rule Compliance</div>
+          <div class="stat-value g">94%</div>
+          <div class="stat-sub pos">↑ +6% vs mese scorso</div>
+          <div class="stat-trend">🛡️</div>
+        </div>
+        <div class="stat-card b">
+          <div class="stat-label">Avg. R:R</div>
+          <div class="stat-value b">1:2.4</div>
+          <div class="stat-sub">Media risk/reward</div>
+          <div class="stat-trend">⚖️</div>
+        </div>
+        <div class="stat-card r">
+          <div class="stat-label">Max Drawdown</div>
+          <div class="stat-value r">-4.2%</div>
+          <div class="stat-sub neg">Controllato · Sotto limite</div>
+          <div class="stat-trend">📉</div>
+        </div>
+        <div class="stat-card a">
+          <div class="stat-label">Profit Factor</div>
+          <div class="stat-value a">2.18</div>
+          <div class="stat-sub pos">Ottimo · Target: >2.0</div>
+          <div class="stat-trend">💰</div>
+        </div>
+        <div class="stat-card p">
+          <div class="stat-label">Discipline Score</div>
+          <div class="stat-value p">96/100</div>
+          <div class="stat-sub pos">Top 5% della piattaforma</div>
+          <div class="stat-trend">🎖️</div>
+        </div>
+        <div class="stat-card g">
+          <div class="stat-label">Trade Attivi</div>
+          <div class="stat-value g">3</div>
+          <div class="stat-sub">2 Long · 1 Short</div>
+          <div class="stat-trend">⚡</div>
+        </div>
+      </div>
+
+      <!-- ══ EQUITY CURVE ══ -->
+      <div class="chart-section fade-in fade-in-2">
+        <div class="chart-header">
+          <div class="chart-title">Equity Curve</div>
+          <div class="chart-tf">
+            <button class="tf-btn" onclick="setTF(this)">1S</button>
+            <button class="tf-btn active" onclick="setTF(this)">1M</button>
+            <button class="tf-btn" onclick="setTF(this)">3M</button>
+            <button class="tf-btn" onclick="setTF(this)">ALL</button>
+          </div>
+        </div>
+        <div class="chart-area">
+          <svg viewBox="0 0 800 180" preserveAspectRatio="none" id="equityChart">
+            <defs>
+              <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#00e5a0" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#00e5a0" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="eqLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#3d9fff"/>
+                <stop offset="100%" stop-color="#00e5a0"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid lines -->
+            <line x1="0" y1="45" x2="800" y2="45" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <line x1="0" y1="90" x2="800" y2="90" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <line x1="0" y1="135" x2="800" y2="135" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <!-- Fill -->
+            <path d="M0,160 L50,148 L100,152 L150,130 L200,125 L250,110 L300,118 L350,95 L400,88 L450,70 L500,75 L550,55 L600,45 L650,30 L700,20 L750,15 L800,8 L800,180 L0,180Z" fill="url(#eqGrad)"/>
+            <!-- Line -->
+            <path d="M0,160 L50,148 L100,152 L150,130 L200,125 L250,110 L300,118 L350,95 L400,88 L450,70 L500,75 L550,55 L600,45 L650,30 L700,20 L750,15 L800,8" stroke="url(#eqLine)" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <!-- Dots on key points -->
+            <circle cx="250" cy="110" r="3" fill="#3d9fff" opacity="0.7"/>
+            <circle cx="550" cy="55" r="3" fill="#00e5a0" opacity="0.7"/>
+            <circle cx="800" cy="8" r="4" fill="#00e5a0"/>
+          </svg>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-muted);">01 Apr</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-muted);">15 Apr</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-muted);">01 Mag</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--green);font-weight:700;">Oggi</span>
+        </div>
+      </div>
+
+      <!-- ══ COMPLIANCE + TRADES ══ -->
+      <div class="two-cols fade-in fade-in-2">
+        <!-- RULE COMPLIANCE -->
+        <div class="compliance-card">
+          <div class="section-header">
+            <div class="section-title">🛡️ Rule Compliance</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--green);font-weight:700;">94% · Eccellente</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:20px;margin-bottom:20px;">
+            <div class="compliance-score"><div class="compliance-score-val">94%</div></div>
+            <div>
+              <div style="font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:4px;">Top 5% della piattaforma</div>
+              <div style="font-size:12px;color:var(--text-dim);">30 giorni consecutivi senza violazioni critiche</div>
+            </div>
+          </div>
+          <div class="rule-list">
+            <div class="rule-row"><div class="rule-status ok"></div><div class="rule-name">Max 2% rischio per trade</div><div class="rule-pct">100%</div></div>
+            <div class="rule-row"><div class="rule-status ok"></div><div class="rule-name">No trading senza piano</div><div class="rule-pct">97%</div></div>
+            <div class="rule-row"><div class="rule-status ok"></div><div class="rule-name">Stop loss obbligatorio</div><div class="rule-pct">100%</div></div>
+            <div class="rule-row"><div class="rule-status warn"></div><div class="rule-name">Max 3 trade al giorno</div><div class="rule-pct">88%</div></div>
+            <div class="rule-row"><div class="rule-status ok"></div><div class="rule-name">No revenge trading</div><div class="rule-pct">95%</div></div>
+            <div class="rule-row"><div class="rule-status ok"></div><div class="rule-name">Journal compilato post-trade</div><div class="rule-pct">92%</div></div>
+          </div>
+        </div>
+
+        <!-- RECENT TRADES -->
+        <div class="trades-card">
+          <div class="section-header">
+            <div class="section-title">📓 Ultimi Trade</div>
+            <div class="view-all">Vedi tutti →</div>
+          </div>
+          <div class="trades-list">
+            <div class="trade-row">
+              <div class="trade-dir l">LONG</div>
+              <div class="trade-sym">XAU/USD</div>
+              <div class="trade-date">Oggi 09:42</div>
+              <div class="trade-rr">R:R 1:2.1</div>
+              <div class="trade-pnl pos">+€ 420</div>
+              <div class="trade-rule ok">✓</div>
+            </div>
+            <div class="trade-row">
+              <div class="trade-dir s">SHORT</div>
+              <div class="trade-sym">EUR/USD</div>
+              <div class="trade-date">Ieri 14:15</div>
+              <div class="trade-rr">R:R 1:1.8</div>
+              <div class="trade-pnl pos">+€ 210</div>
+              <div class="trade-rule ok">✓</div>
+            </div>
+            <div class="trade-row">
+              <div class="trade-dir l">LONG</div>
+              <div class="trade-sym">GBP/USD</div>
+              <div class="trade-date">03 Mag</div>
+              <div class="trade-rr">R:R 1:2.4</div>
+              <div class="trade-pnl neg">-€ 95</div>
+              <div class="trade-rule ok">✓</div>
+            </div>
+            <div class="trade-row">
+              <div class="trade-dir s">SHORT</div>
+              <div class="trade-sym">BTC/USD</div>
+              <div class="trade-date">02 Mag</div>
+              <div class="trade-rr">R:R 1:3.0</div>
+              <div class="trade-pnl pos">+€ 840</div>
+              <div class="trade-rule ok">✓</div>
+            </div>
+            <div class="trade-row">
+              <div class="trade-dir l">LONG</div>
+              <div class="trade-sym">XAU/USD</div>
+              <div class="trade-date">01 Mag</div>
+              <div class="trade-rr">R:R 1:1.5</div>
+              <div class="trade-pnl neg">-€ 180</div>
+              <div class="trade-rule viol">✗</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CHALLENGES ══ -->
+      <div class="challenges-section fade-in fade-in-3">
+        <div class="section-header">
+          <div class="section-title">🏆 Sfide & Challenge</div>
+          <div class="view-all">Tutte le sfide →</div>
+        </div>
+        <div class="challenges-grid">
+          <div class="challenge-card active-ch">
+            <div class="ch-status active">● IN CORSO</div>
+            <div class="ch-name">30-Day Discipline</div>
+            <div class="ch-sub">Compliance ≥ 90% per 30 giorni</div>
+            <div class="ch-progress-bar"><div class="ch-progress-fill" style="width:80%"></div></div>
+            <div class="ch-progress-text"><span>Giorno 24/30</span><span style="color:var(--green);">80%</span></div>
+          </div>
+          <div class="challenge-card active-ch">
+            <div class="ch-status active">● IN CORSO</div>
+            <div class="ch-name">Profit Factor King</div>
+            <div class="ch-sub">Mantieni PF ≥ 2.0 per il mese</div>
+            <div class="ch-progress-bar"><div class="ch-progress-fill" style="width:65%;background:var(--blue);"></div></div>
+            <div class="ch-progress-text"><span>PF attuale: 2.18</span><span style="color:var(--blue);">✓</span></div>
+          </div>
+          <div class="challenge-card won-ch">
+            <div class="ch-status won">🏆 VINTA</div>
+            <div class="ch-name">Win Streak Master</div>
+            <div class="ch-sub">8 trade vincenti consecutivi</div>
+            <div class="ch-progress-bar"><div class="ch-progress-fill" style="width:100%;background:var(--amber);"></div></div>
+            <div class="ch-progress-text"><span>8/8 trade</span><span style="color:var(--amber);">Completata</span></div>
+            <div class="ch-medal">🥇</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SHARE CARD ══ -->
+      <div class="share-section fade-in fade-in-3" id="shareSection">
+        <div class="section-header">
+          <div class="section-title">↗ Condividi la tua Trader Card</div>
+        </div>
+        <div class="share-preview">
+          <div class="sp-header">
+            <div class="sp-avatar">MR</div>
+            <div>
+              <div class="sp-name">Marco Rossi <span class="sp-verified">✓</span></div>
+              <div class="sp-handle">@marco_trades · Elite</div>
+            </div>
+            <div class="sp-logo">TG ⚔️</div>
+          </div>
+          <div class="sp-stats">
+            <div><div class="sp-stat-val g">+€8.4K</div><div class="sp-stat-label">P&L Totale</div></div>
+            <div><div class="sp-stat-val">68.4%</div><div class="sp-stat-label">Win Rate</div></div>
+            <div><div class="sp-stat-val g">94%</div><div class="sp-stat-label">Compliance</div></div>
+          </div>
+          <div class="sp-badges-mini">
+            <span class="sp-badge-mini" title="30 Giorni Disciplina">🛡️</span>
+            <span class="sp-badge-mini" title="8 Win Streak">🔥</span>
+            <span class="sp-badge-mini" title="Verificato">✅</span>
+            <span class="sp-badge-mini" title="Elite Founder">💎</span>
+            <span class="sp-badge-mini" title="2 Sfide Vinte">🏆</span>
+          </div>
+          <div class="sp-footer">
+            <div class="sp-footer-text">traderguardians.vercel.app/@marco_trades<br>Generato il 05/05/2026</div>
+            <div class="sp-qr">📱</div>
+          </div>
+        </div>
+        <div class="share-actions">
+          <button class="share-btn copy" onclick="copyLink()">📋 Copia Link</button>
+          <button class="share-btn twitter" onclick="shareTwitter()">𝕏 Condividi</button>
+          <button class="share-btn download" onclick="downloadCard()">⬇ Scarica PNG</button>
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </main>
+</div>
+
+<script>
+function setTF(el) {
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+function editCard() {
+  alert('In produzione: apre pannello modifica bio, stile banner, asset preferiti, ecc.');
+}
+function copyLink() {
+  const url = 'https://traderguardians.vercel.app/@marco_trades';
+  navigator.clipboard?.writeText(url).catch(() => {});
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '✅ Copiato!';
+  setTimeout(() => btn.textContent = orig, 2000);
+}
+function shareTwitter() {
+  const text = '📊 La mia Trader Card su TraderGuardians:\n🏆 Win Rate: 68.4% | P&L: +€8.4K | Compliance: 94%\nSolo su invito → traderguardians.vercel.app';
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+}
+function downloadCard() {
+  alert('In produzione: usa html2canvas o una Vercel Function per generare il PNG della card.');
+}
+
+// Animate compliance circle on load
+document.addEventListener('DOMContentLoaded', () => {
+  const circle = document.querySelector('.compliance-score');
+  if (circle) {
+    circle.style.setProperty('--pct', '0');
+    setTimeout(() => {
+      circle.style.transition = 'all 1.2s cubic-bezier(0.4,0,0.2,1)';
+      circle.style.setProperty('--pct', '94');
+    }, 400);
+  }
+});
+</script>
+</body>
+</html>
